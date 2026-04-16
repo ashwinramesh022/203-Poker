@@ -4,7 +4,7 @@ import path from 'path';
 const db = createClient(
   process.env.TURSO_DATABASE_URL
     ? { url: process.env.TURSO_DATABASE_URL, authToken: process.env.TURSO_AUTH_TOKEN }
-    : { url: `file:${path.join(__dirname, '../../poker.db')}` }
+    : { url: `file:///` + path.join(__dirname, '../../poker.db') }
 );
 
 export async function initDb() {
