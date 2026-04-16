@@ -1,14 +1,19 @@
-import { createClient } from '@libsql/client';
+import { createClient, type Client } from '@libsql/client';
 import path from 'path';
 
-const db = createClient(
-  process.env.TURSO_DATABASE_URL
-    ? { url: process.env.TURSO_DATABASE_URL, authToken: process.env.TURSO_AUTH_TOKEN }
-    : { url: `file:///` + path.join(__dirname, '../../poker.db') }
-);
+let _db: Client | null = null;
+
+function getDb(): Client {
+  if (_db) return _db;
+  const url = process.env.TURSO_DATABASE_URL || `file:${path.join(__dirname, '../../poker.db')}`;
+  const authToken = process.env.TURSO_AUTH_TOKEN;
+  console.log('[db] init, url scheme:', url.split('://')[0]);
+  _db = createClient(authToken ? { url, authToken } : { url });
+  return _db;
+}
 
 export async function initDb() {
-  await db.executeMultiple(`
+  await getDb().executeMultiple(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
@@ -17,7 +22,6 @@ export async function initDb() {
       avatar_color TEXT NOT NULL DEFAULT '#6366f1',
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
-
     CREATE TABLE IF NOT EXISTS sessions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -29,7 +33,6 @@ export async function initDb() {
       created_by INTEGER NOT NULL REFERENCES users(id),
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
-
     CREATE TABLE IF NOT EXISTS session_players (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
@@ -40,5 +43,11 @@ export async function initDb() {
     );
   `);
 }
+
+const db = new Proxy({} as Client, {
+  get(_target, prop) {
+    return (getDb() as any)[prop as string];
+  },
+});
 
 export default db;
