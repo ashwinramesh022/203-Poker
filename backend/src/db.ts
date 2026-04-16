@@ -6,7 +6,7 @@ let _db: Client | null = null;
 function getDb(): Client {
   if (_db) return _db;
   const url = process.env.TURSO_DATABASE_URL || `file:${path.join(__dirname, '../../poker.db')}`;
-  const authToken = process.env.TURSO_AUTH_TOKEN;
+  const authToken = process.env.TURSO_AUTH_TOKEN?.trim();
   console.log('[db] init, url scheme:', url.split('://')[0]);
   _db = createClient(authToken ? { url, authToken } : { url });
   return _db;
