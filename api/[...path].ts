@@ -6,6 +6,7 @@ let initialised = false;
 let initError: unknown = null;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  console.log('[handler] method:', req.method, 'url:', req.url);
   if (!initialised && !initError) {
     try {
       await initDb();
